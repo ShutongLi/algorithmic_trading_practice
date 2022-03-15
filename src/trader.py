@@ -32,6 +32,5 @@ class Trader:
         '''
         print(f'receiving new order: {new_order}')
         self.update_orderbook(new_order)
-        sel
         # self.make_trading_decision()
         pass
