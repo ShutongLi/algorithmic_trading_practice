@@ -14,11 +14,10 @@ class Trader:
         self.order_book = OrderBook()
         self.data_collector = DataCollector()
         self.deposit = deposit
-        # TODO:// is this supposed to be a statistical model or a object with rule-based behavior
         self.strategy = None
 
     def update_orderbook(self, new_order):
-        self.order_book.hear_from_market(new_order)
+        self.order_book.react_to_order(new_order)
 
     def update_data_collector(self, new_order):
         self.data_collector.react_to_new_order(new_order)

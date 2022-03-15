@@ -1,12 +1,13 @@
 import socket
 import sys
 import json
-from src.trader import Trader
+from src.orderbook import OrderBook
+from  src.tradingStrategy import TradingStrategy
 
 HOST, PORT = 'localhost', 9995
 data = " ".join(sys.argv[1:])
 
-trader = Trader()
+# trader = Trader()
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect((HOST, PORT))
     while True:
@@ -16,5 +17,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         # turn string
         # into a dict
         new_order = json.loads(received)
-        # trader.react_to_new_order(new_order)
+        # ob = OrderBook()
+        # ts = TradingStrategy()
+        # ts.get_best_order(ob)
+
         print(f'Received: {new_order}')

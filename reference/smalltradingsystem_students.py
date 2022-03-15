@@ -8,7 +8,7 @@ from collections import deque
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
 
-
+#
 # def load_financial_data(start_date, end_date,output_file):
 #     try:
 #         df = pd.read_pickle(output_file)
@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 #         df = data.DataReader('GOOG', 'yahoo', start_date, end_date)
 #         df.to_pickle(output_file)
 #     return df
-
+#
 # goog_data=load_financial_data(start_date='2001-01-01',
 #                     end_date = '2018-01-01',
 #                     output_file='goog_data.pkl')
