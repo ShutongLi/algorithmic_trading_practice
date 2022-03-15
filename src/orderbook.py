@@ -54,7 +54,7 @@ class OrderBook:
         pointer_we_maintain = self.lookup[oid]
         pointer_we_maintain['Quantity'] = quant
         pointer_we_maintain['Price'] = price
-        # TODO:// UPDATE PRIORITY IN heapq
+        # TODO:// UPDATE PRIORITY IN heapq while MAINTAINING QUEUE INVARIANCE, AHHHHHHHHHHHHHHHH
 
     def hear_from_market(self, new_order):
         symbol, side, action, oid = itemgetter(*['Symbol', 'Side', 'Action', 'OrderID'])(new_order)
