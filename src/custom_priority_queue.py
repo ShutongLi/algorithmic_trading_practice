@@ -2,6 +2,7 @@ import heapq
 import itertools
 from collections import Sequence
 import warnings
+from copy import deepcopy
 
 OID_FIELD = 'OrderID'
 
@@ -39,33 +40,36 @@ class OrderQueue(Sequence):
         This is both for adding and updating orders
         Example:
         # assuming it is a bid book (so high to low)
-        >>> new_bid = {'Symbol': 'AAL', 'Description': 'American Airlines Group Inc',\
-             'OrderID': '1101', 'Quantity': '455000', 'Action': 'A', 'Exchange': '1',\
-             'Side': 'B', 'Price': '440.05', 'News': '0'}
-        >>> bid_list = OrderQueue()
+        >>> new_bid = {'Symbol': 'AAL', 'Description': 'American Airlines Group Inc',
+             'OrderID': '1101', 'Quantity': '455000', 'Action': 'A', 'Exchange': '1',
+             'Side': 'B', 'Price': '430.05', 'News': '0'}
+        >>> bid_list = OrderQueue('B')
         >>> bid_list.add_task(new_bid)
         >>> bid_list
-
+        [{'Symbol': 'AAL', 'OrderID': 1101, 'Price': 430.05, 'Quantity': 455000}]
         >>> new_bid_with_higher_price = {'Symbol': 'AAL', 'Description': 'American Airlines Group Inc',\
              'OrderID': '1102', 'Quantity': '455000', 'Action': 'A', 'Exchange': '1',\
              'Side': 'B', 'Price': '440.05', 'News': '0'}
         >>> bid_list.add_task(new_bid_with_higher_price)
-        [{'Symbol': 'AAL', 'OrderID': 1101, 'Price': 440.05, 'Quantity': 455000}, {'Symbol': 'AAL', 'OrderID': 1102, 'Price': 440.05, 'Quantity': 455000}]
+        >>> bid_list
+        [{'Symbol': 'AAL', 'OrderID': 1102, 'Price': 440.05, 'Quantity': 455000}, {'Symbol': 'AAL', 'OrderID': 1101, 'Price': 430.05, 'Quantity': 455000}]
         >>> first_bid_updated_with_higher_price = {'Symbol': 'AAL', 'Description': 'American Airlines Group Inc',\
              'OrderID': '1101', 'Quantity': '455000', 'Action': 'A', 'Exchange': '1',\
              'Side': 'B', 'Price': '1000.0', 'News': '0'}
         >>> bid_list.add_task(first_bid_updated_with_higher_price)
-        ['<removed-order>', {'Symbol': 'AAL', 'OrderID': 1102, 'Price': 440.05, 'Quantity': 455000}, {'Symbol': 'AAL', 'OrderID': 1101, 'Price': 1000.0, 'Quantity': 455000}]
-
-
+        >>> bid_list
+        [{'Symbol': 'AAL', 'OrderID': 1101, 'Price': 1000.0, 'Quantity': 455000}, '<removed-order>', {'Symbol': 'AAL', 'OrderID': 1102, 'Price': 440.05, 'Quantity': 455000}]
+        >>> bid_list.peek_order()
+        {'Symbol': 'AAL', 'OrderID': 1101, 'Price': 1000.0, 'Quantity': 455000}
         """
         oid = int(order[OID_FIELD])
+        order = deepcopy(order)
         if oid in self.oid_entry_lookup:
             self.remove_task(order)
         count = next(self.counter)
         order = {'Symbol': order['Symbol'], 'OrderID': int(order['OrderID']), 'Price': float(order['Price']),
                  'Quantity': int(order['Quantity'])}
-        priority = self.prior_multiplier * ['Quantity']
+        priority = self.prior_multiplier * order['Price']
         entry = [priority, count, order]
         self.oid_entry_lookup[oid] = entry
         heapq.heappush(self.queue, entry)
@@ -92,15 +96,18 @@ class OrderQueue(Sequence):
         """
         :return: the NON-REMOVED item of the highest priority
         """
-        while self.queue:
-            priority, count, order = self.queue[0]
-            if order is self.remove_placeholder:
-                print('got rid of removed placeholders btw')
-                heapq.heappop(self.queue)
-            else:
-                return self.queue[0]
+        for order in self.queue:
+            priority, count, order = order
+            if order is not self.remove_placeholder:
+                # return on first non-removed order
+                return order
+
         warnings.warn("peeking an empty queue btw, you know what you're doing?", UserWarning)
-        return '<-BIG EMPTY from peeking an empty queue, BIG SADGE->'
+        return '<-WOW, BIG EMPTY, BIG SADGE->'
+
+    def clear_masks(self):
+        # TODO:// clear masks of the list if it is too much (O(n))
+        pass
 
     def __getitem__(self, item):
         return self.queue[item]
@@ -110,3 +117,5 @@ class OrderQueue(Sequence):
 
     def __repr__(self):
         return str([elem[2] for elem in self.queue])
+        # return str(self.queue)
+
