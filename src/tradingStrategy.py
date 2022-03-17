@@ -1,5 +1,4 @@
 import pandas as pd
-from src.orderbook import OrderBook
 import numpy as np
 from pandas_datareader import data
 import matplotlib.pyplot as plt

@@ -64,7 +64,9 @@ class OrderQueue(Sequence):
         """
         # if new order doesn't need to be added to orderbook (b'c it is already filled)
         if order is None:
+            print('order already filled, no need for adding...')
             return
+        # print('attempt adding order...')
         oid = int(order[OID_FIELD])
         if oid in self.oid_entry_lookup:
             self.remove_task(order)
