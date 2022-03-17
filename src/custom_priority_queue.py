@@ -62,8 +62,10 @@ class OrderQueue(Sequence):
         >>> bid_list.peek_order()
         {'Symbol': 'AAL', 'OrderID': 1101, 'Price': 1000.0, 'Quantity': 455000}
         """
+        # if new order doesn't need to be added to orderbook (b'c it is already filled)
+        if order is None:
+            return
         oid = int(order[OID_FIELD])
-        order = deepcopy(order)
         if oid in self.oid_entry_lookup:
             self.remove_task(order)
         count = next(self.counter)
@@ -106,7 +108,7 @@ class OrderQueue(Sequence):
         return '<-WOW, BIG EMPTY, BIG SADGE->'
 
     def clear_masks(self):
-        # TODO:// clear masks of the list if it is too much (O(n))
+        # TODO:// clear masks of the list if it is too much.
         pass
 
     def __getitem__(self, item):
