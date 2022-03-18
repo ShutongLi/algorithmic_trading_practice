@@ -105,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode",action="store", dest="mode")
     parser.add_argument("-p", "--port",action="store", dest="port",type=int)
     parser.add_argument("-t", "--time-interval",action="store",
-                        dest="interval",type=int,default=1)
+                        dest="interval",type=float,default=1)
     
     opt=parser.parse_args()
     if not opt.port:

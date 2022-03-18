@@ -64,7 +64,7 @@ class OrderQueue(Sequence):
         """
         # if new order doesn't need to be added to orderbook (b'c it is already filled)
         if order is None:
-            print('order already filled, no need for adding...')
+            # print('order already filled, no need for adding...')
             return
         # print('attempt adding order...')
         oid = int(order[OID_FIELD])
@@ -107,11 +107,7 @@ class OrderQueue(Sequence):
                 return order
 
         warnings.warn("peeking an empty queue btw, you know what you're doing?", UserWarning)
-        return '<-WOW, BIG EMPTY, BIG SADGE->'
-
-    def clear_masks(self):
-        # TODO:// clear masks of the list if it is too much.
-        pass
+        return None
 
     def __getitem__(self, item):
         return self.queue[item]

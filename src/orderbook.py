@@ -2,11 +2,13 @@ __author__ = 'Shutong Li'
 import pandas as pd
 from collections import defaultdict
 from operator import itemgetter
-import heapq
 from copy import deepcopy
 from src.custom_priority_queue import OrderQueue
 from src.data_collector import DataCollector
 from src.tradingStrategy import TradingStrategy
+from src.trademanager import TradeManager
+import json
+
 
 class OrderBook:
     """
@@ -19,7 +21,8 @@ class OrderBook:
         # people that are on side 'sell'
         self.ask = defaultdict(lambda: OrderQueue('S'))
         self.dc = DataCollector()
-        self.ts = TradingStrategy()
+        self.ts = TradingStrategy(dc=self.dc, ob=self)
+        self.tm = TradeManager(df=self.dc)
 
     def react_to_market_order(self, new_order):
         """
@@ -28,11 +31,11 @@ class OrderBook:
         :return:
         """
         # print(f'!!!receiving order {new_order}')
-        # store data into the data_collector
-        self.store_data(new_order)
 
         # type cast some values
         new_order = self.clean_order(new_order)
+        # store data into the data_collector
+        self.store_data(new_order)
 
         # identify which orderbook (b/s) for which company to open
         symbol, side = new_order['Symbol'], new_order['Side']
@@ -48,15 +51,38 @@ class OrderBook:
         # both 'A' and 'M' are under the same operation as long as orderid is UNIQUE!
         book.add_task(new_order)
 
+        # make decision (an order)
+        decision = self.ts.make_decision(symbol)
+        # print(decision)
+        # order may potentially be partially filled immediately due to available orders
+        # we call the resultant order after crossing crossed_decision
+        # the difference in
+        validated_decision = self.tm.on_ts_trade(decision)
+        validated_decision = self.match_order(validated_decision)
+        # print(f'order valid = {validated_decision is not None}')
+        return json.dumps(validated_decision)
+
+
+
 
     def store_data(self, new_order):
+        """
+        Store data into the datacollector container
+        :param new_order: dict
+        :return:
+        """
         self.dc.populate_historical_data(new_order)
 
     def clean_order(self, order):
+        """
+
+        :param order:
+        :return:
+        """
         # this is where the deepcopy happens
         order = deepcopy(order)
         order = {'Symbol': order['Symbol'], 'OrderID': int(order['OrderID']), 'Price': float(order['Price']),
-                 'Side': order['Side'], 'Quantity': int(order['Quantity'])}
+                 'Side': order['Side'], 'Quantity': int(order['Quantity']), 'News': int(order['News'])}
         return order
 
     def match_order(self, new_order, for_market=True):
@@ -66,6 +92,8 @@ class OrderBook:
         :return: the same new_order pointer with quantity modified or None
         """
         # print('attempt crossing the order...')
+        if new_order is None:
+            return None
         symbol, side, quantity, price = new_order['Symbol'], new_order['Side'], \
                                         new_order['Quantity'], new_order['Price']
         is_buying = False
@@ -84,15 +112,15 @@ class OrderBook:
                 # if price matching condition meets (i.e. there is a sell order <= the bid of our new buy order
                 # or there is a buy order >= then the ask of our current sell order)
                 if self.price_match(side=side, book_price=book_order_price, order_price=price):
-                    print(f'found crossing candidate for our new order {new_order}. Candidate: {order} ')
+                    # print(f'found crossing candidate for our new order {new_order}. Candidate: {order} ')
                     available_amount = min(book_order_quantity, quantity)
                     order['Quantity'] -= available_amount
                     new_order['Quantity'] -= available_amount
                     if order['Quantity'] <= 0:
-                        print('the order candidate in orderbook is filled')
+                        # print('the order candidate in orderbook is filled')
                         book.remove_task(order)
                     if new_order['Quantity'] <= 0:
-                        print('this new order is fulfilled')
+                        # print('this new order is fulfilled')
                         return None
                 # if no more matching can be done (because price only goes higher), we stop the loop
                 else:
@@ -112,6 +140,7 @@ class OrderBook:
     def return_best_order(self, side, symbol):
         book = self.bid if side == 'B' else self.ask
         # have to deepcopy, don't pass away the pointer to our internal object!
+        # print(f"{'sell' if side == 'S' else 'buy'}book from {symbol}: {book[symbol]}")
         return deepcopy(book[symbol].peek_order())
 
     def __repr__(self):
